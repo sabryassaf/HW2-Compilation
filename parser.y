@@ -52,28 +52,55 @@ Statement: LBRACE Statements RBRACE { }
         | While LPAREN Exp RPAREN Statement { }
         | Break SC { }
         | Continue SC { }
-Call: ID LPAREN ExpList RPAREN { }
-        | ID LPAREN RPAREN { }
-ExpList: Exp { }
-        | Exp COMMA ExpList { }
-Type: Int { }
-    | Byte { }
-    | Bool { }
-Exp: LPAREN Exp RPAREN { }
-    | ID LBRACK Exp RBRACK { }
-    | Exp BINOP Exp { }
-    | ID { }
-    | Call { }
-    | NUM { }
-    | NUMB { }
-    | STRING { }
-    | TRUE { }
-    | FALSE { }
-    | NOT Exp { }
-    | Exp AND Exp { }
-    | Exp OR Exp { }
-    | Exp RELOP Exp { }
-    | LPAREN Type RPAREN Exp { }
+
+Call: ID LPAREN ExpList RPAREN {
+        std::shared_ptr<ast::ExpList> args = std::dynamic_pointer_cast<ast::ExpList>($3);
+        std::shared_ptr<ast::ID> func_id = std::dynamic_pointer_cast<ast::ID>($1);
+        $$ =  std::make_shared<ast::Call>(func_id,args);
+ }
+        | ID LPAREN RPAREN {
+        std::shared_ptr<ast::ID> func_id = std::dynamic_pointer_cast<ast::ID>($1);
+        $$ = std::make_shared<ast::Call>(func_id);
+         }
+
+ExpList: Exp {$$ = std::dynamic_pointer_cast<ast::ExpList>($1); }
+        | Exp COMMA ExpList { 
+                std::shared_ptr<ast::ExpList> e_list = std::dynamic_pointer_cast<ast::ExpList>($3);
+                e_list->push_front($1);
+                $$ = e_list;
+
+        }
+
+Type: Int {$$ = std::make_shared<ast::PrimitiveType>(ast::BuiltInType::INT);}
+    | Byte {$$ = std::make_shared<ast::PrimitiveType>(ast::BuiltInType::BYTE);}
+    | Bool {$$ = std::make_shared<ast::PrimitiveType>(ast::BuiltInType::BOOL);}
+
+Exp: LPAREN Exp RPAREN {$$ = $2;}
+    | ID LBRACK Exp RBRACK {$$ = std::make_shared<ast::ArrayDereference>(std::dynamic_pointer_cast<ast::ID>($1),$3);}
+    | Exp DIV Exp {$$ = std::make_shared<ast::BinOp>($1,$3,ast::BinOpType::DIV);}
+    | Exp MUL Exp {$$ = std::make_shared<ast::BinOp>($1,$3,ast::BinOpType::MUL);}
+    | Exp SUB Exp {$$ = std::make_shared<ast::BinOp>($1,$3,ast::BinOpType::SUB);}
+    | Exp ADD Exp {$$ = std::make_shared<ast::BinOp>($1,$3,ast::BinOpType::ADD);}
+    | ID {$$ = $1;}
+    | Call {$$ = $1;}
+    | NUM {$$ = $1;}
+    | NUMB {$$ = $1;}
+    | STRING {$$ = $1;}
+    | TRUE {$$ = std::make_shared<ast::Bool>(true); }
+    | FALSE {$$ = std::make_shared<ast::Bool>(false); }
+    | NOT Exp {$$ = std::make_shared<ast::Not>($2);}
+    | Exp AND Exp {$$ = std::make_shared<ast::And>($1,$3);}
+    | Exp OR Exp {$$ = std::make_shared<ast::Or>($1,$3);}
+    | Exp EQ Exp {$$ = std::make_shared<ast::RelOp>($1,$3,ast::RelOpType::EQ);}
+    | Exp NE Exp {$$ = std::make_shared<ast::RelOp>($1,$3,ast::RelOpType::NE);}
+    | Exp LT Exp {$$ = std::make_shared<ast::RelOp>($1,$3,ast::RelOpType::LT);}
+    | Exp GT Exp {$$ = std::make_shared<ast::RelOp>($1,$3,ast::RelOpType::GT);}
+    | Exp LE Exp {$$ = std::make_shared<ast::RelOp>($1,$3,ast::RelOpType::LE);}
+    | Exp GE Exp {$$ = std::make_shared<ast::RelOp>($1,$3,ast::RelOpType::GE);}
+    | LPAREN Type RPAREN Exp {$$ = std::make_shared<ast::Cast>($4,std::dynamic_pointer_cast<ast::PrimitiveType>($2)); } 
+
+    // I don't think we need to cast the EXP objects because they are already Exp, opposite to RPAREN for example which needs to be specified 
+    // - yet better to check
 ;
 
 // TODO: Define grammar here
