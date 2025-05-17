@@ -25,20 +25,50 @@ using namespace std;
 
 // While reducing the start variable, set the root of the AST
 Program:  Funcs { program = $1; }
-Funcs: /* empty */ { }
-        | FuncDecl Funcs { }
-FuncDecl: RetType ID LPAREN Formals RPAREN LBRACE Statements RBRACE { }
-RetType: Type { }
-RetType: Void { }
-Formals: empty { }
-        | FormalsList { }
+Funcs: /* empty */ {$$ = std::make_shared<ast::Funcs>()}
+        | FuncDecl Funcs {
+              std::shared_ptr<ast::Funcs> funcs =  std::dynamic_pointer_cast<ast::Funcs>($2);
+              std::shared_ptr<ast::FuncDecl> list = std::dynamic_pointer_cast<ast::FuncDecl>($1);
+              list->push_front(funcs)
+              $$ = $2
+         }
+FuncDecl: RetType ID LPAREN Formals RPAREN LBRACE Statements RBRACE { 
+        
+        // Not sure about RetType casting it's supposed to be implicit 
+        std::shared_ptr<ID> id = std::dynamic_pointer_cast<ast::ID>($2);
+        std::shared_ptr<Formals> formals = std::dynamic_pointer_cast<ast::Formals>($4);
+        std::shared_ptr<Statements> body = std::dynamic_pointer_cast<ast::Statements>($7);
+        $$ = std::make_shared<ast::FuncDecl>(id,$1,formals,body);
+ }
+RetType: Type {$$ = $1; } //Not sure if we need to cast it to primitive type or what
+RetType: Void { $$ = std::make_shared<ast::PrimitiveType>(ast::BuiltInType::VOID); }
+Formals: empty { 
+        $$ = std::make_shared<ast::Formals>();
+                }
+        | FormalsList {
+                $$ = $1;
+         }
 
-FormalsList: FormalDecl { }
-        | FormalDecl COMMA FormalsList { }
-FormalDecl: Type ID { }
-Statements: Statement { }
+FormalsList: FormalDecl { } parser
+        | FormalDecl COMMA FormalsList {
+              std::shared_ptr<ast::Formal> formal =  std::dynamic_pointer_cast<ast::Formal>($1);
+              std::shared_ptr<ast::Formals> list = std::dynamic_pointer_cast<ast::Formals>($3);
+              list->push_front(formal)
+              $$ = $3
+         }
+FormalDecl: Type ID {
+        std::shared_ptr<ast::Type> type = std::dynamic_pointer_cast<ast::Type>($1)
+        std::shared_ptr<ast::ID> id =std::dynamic_pointer_cast<ast::ID>($2)
+        $$ = std::make_shared<ast::Formal>(id,type);
+        }
+Statements: Statement {
+        std::shared_ptr<ast::Statement> value = std::dynamic_pointer_cast<ast::Statement>($1)
+        $$ = std::make_shared<ast::Statements>(value);
+        }
         | Statements Statement { 
-                
+                std::shared_ptr<ast::Statements> statements = std::dynamic_pointer_cast<ast::Statements>($1);
+                statements->push_back(std::dynamic_pointer_cast<ast::Statement>($2));
+                $$ = $1;
         }
 
 Statement: LBRACE Statements RBRACE {
