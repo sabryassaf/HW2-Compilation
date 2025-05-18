@@ -45,7 +45,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 21 "parser.y"
+#line 20 "parser.y"
 
     #include <memory> // For std::shared_ptr
     #include "nodes.hpp" // For ast::Node

@@ -10,7 +10,6 @@ extern int yylex();
 
 void yyerror(const char*);
 
-// root of the AST, set by the parser and used by other parts of the compiler
 std::shared_ptr<ast::Node> program;
 
 using namespace std;
@@ -23,12 +22,12 @@ using namespace std;
     #include "nodes.hpp" // For ast::Node
 }
 
-%define api.value.type {std::shared_ptr<ast::Node>} // Ensures YYSTYPE is std::shared_ptr<ast::Node>
+%define api.value.type {std::shared_ptr<ast::Node>} 
 
 // TODO: Define tokens here
 %token VOID INT BYTE BOOL AND OR NOT TRUE FALSE RETURN IF ELSE WHILE BREAK CONTINUE SC COMMA LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK ASSIGN ID NUM NUM_B STRING
 %token EQ NE LT GT LE GE ADD SUB MUL DIV
-%token errorlex // Added for scanner error reporting
+%token errorlex 
 
 // TODO: Define precedence and associativity here
 %right ASSIGN
@@ -39,14 +38,13 @@ using namespace std;
 %left  ADD SUB
 %left  MUL DIV
 %right NOT
-%right CAST_PREC      // For (Type)Exp cast operations - Reinstated
-%nonassoc NO_ELSE     // For if-statement without an else part - Reinstated
-%right ELSE        // For the ELSE keyword (dangling else resolution)
+%right CAST_PREC      
+%nonassoc NO_ELSE     
+%right ELSE       
 
 
 %%
 
-// While reducing the start variable, set the root of the AST
 Program:  Funcs { program = $1; }
 Funcs: /* empty */ {$$ = std::make_shared<ast::Funcs>();}
         | FuncDecl Funcs {
@@ -159,7 +157,7 @@ Call: ID LPAREN ExpList RPAREN {
          }
 
 ExpList: Exp {
-            auto new_list = std::make_shared<ast::ExpList>();
+            std::shared_ptr<ast::ExpList> new_list = std::make_shared<ast::ExpList>();
             new_list->push_front(std::dynamic_pointer_cast<ast::Exp>($1));
             $$ = new_list;
          }
